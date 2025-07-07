@@ -2,10 +2,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "LayerCake - Make Run (default_name)",
+            "label": "FastAsmWslComp - Build and Run",
             "type": "shell",
             "command": "wsl",
-            "args": ["make", "run", "PROG_NAME=default_name"],
+            "args": ["make", "run", "PROG_NAME=program"],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -24,10 +24,10 @@
             }
         },
         {
-            "label": "LayerCake - Make Build (default_name)",
+            "label": "FastAsmWslComp - Build Only",
             "type": "shell",
             "command": "wsl",
-            "args": ["make", "build", "PROG_NAME=default_name"],
+            "args": ["make", "build", "PROG_NAME=program"],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -43,10 +43,10 @@
             }
         },
         {
-            "label": "LayerCake - Make Build",
+            "label": "FastAsmWslComp - Debug with GDB",
             "type": "shell",
             "command": "wsl",
-            "args": ["make", "build"],
+            "args": ["make", "run_debug", "PROG_NAME=program"],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -62,7 +62,7 @@
             }
         },
         {
-            "label": "LayerCake - Make Clean",
+            "label": "FastAsmWslComp - Clean Build",
             "type": "shell",
             "command": "wsl",
             "args": ["make", "clean"],
@@ -81,10 +81,10 @@
             }
         },
         {
-            "label": "LayerCake - Make Run Debug",
+            "label": "FastAsmWslComp - Show Help",
             "type": "shell",
             "command": "wsl",
-            "args": ["make", "run_debug"],
+            "args": ["make", "help"],
             "group": "build",
             "presentation": {
                 "echo": true,

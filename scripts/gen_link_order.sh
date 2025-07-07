@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gen_link_order.sh - Génère l'ordre de liaison des objets selon dépendances d'assembleur
+# gen_link_order.sh - Generates object linking order based on assembly dependencies
 # Usage: bash gen_link_order.sh <srcdir> <builddir> <objdir>
 
 srcdir=$1
@@ -8,7 +8,7 @@ objdir=$3
 
 tmp=$(mktemp)
 
-# Mapper symboles définis -> fichier
+# Map defined symbols -> file
 declare -A def
 for f in "$srcdir"/*.asm; do
   base=$(basename "$f" .asm)
@@ -17,10 +17,10 @@ for f in "$srcdir"/*.asm; do
   done
 done
 
-# Générer paires pour tsort
+# Generate pairs for tsort
 for f in "$srcdir"/*.asm; do
   base=$(basename "$f" .asm)
-  # analyser les appels
+  # analyze calls
   grep -oP 'call\s+\K\w+' "$f" | while read sym; do
     dep=${def[$sym]}
     if [[ -n "$dep" ]]; then
@@ -29,7 +29,7 @@ for f in "$srcdir"/*.asm; do
   done
 done
 
-# assurer que tous les modules sont listés
+# ensure all modules are listed
 for f in "$srcdir"/*.asm; do
   echo "$(basename "$f" .asm)" >> "$tmp"
 done
@@ -38,7 +38,7 @@ done
 order=$(tsort "$tmp")
 rm -f "$tmp"
 
-# imprimer la liste d'objets avec chemin
+# print object list with path
 while read mod; do
   echo "$objdir/$mod.o"
 done <<< "$order"

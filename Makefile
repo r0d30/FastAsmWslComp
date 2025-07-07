@@ -1,112 +1,112 @@
-# Makefile pour projet assembleur Linux
+# Makefile for Linux assembly project
 AS = nasm
 ASFLAGS = -f elf64
 LD = ld
 CC = gcc
 
 # =============================================================================
-# VARIABLES CONFIGURABLES (peuvent être surchargées dans la commande make)
+# CONFIGURABLE VARIABLES (can be overridden in make command)
 # =============================================================================
 
-# Nom du programme (sans extension)
+# Program name (without extension)
 PROG_NAME ?= program
 
-# Extension du programme (formats supportés uniquement)
+# Program extension (supported formats only)
 PROG_EXT ?= elf
 
-# Validation de l'extension
+# Extension validation
 VALID_EXTS := elf bin out
 ifeq ($(filter $(PROG_EXT),$(VALID_EXTS)),)
-    $(error Extension '$(PROG_EXT)' non supportée. Extensions valides: $(VALID_EXTS))
+    $(error Extension '$(PROG_EXT)' not supported. Valid extensions: $(VALID_EXTS))
 endif
 
-# Ordre spécifique des objets (par défaut : ordre automatique)
+# Specific object order (default: automatic order)
 OBJ_ORDER ?= 
 
-# Limites de ressources (ulimit) - mettre "none" pour désactiver
-ULIMIT_VIRTUAL ?= 10240    # Mémoire virtuelle (kB)
-ULIMIT_PROCESSES ?= 10     # Nombre de processus
-ULIMIT_TIME ?= 5           # Temps CPU (secondes)
-ULIMIT_FILESIZE ?= 1024    # Taille des fichiers (kB)
+# Resource limits (ulimit) - set "none" to disable
+ULIMIT_VIRTUAL ?= 10240    # Virtual memory (kB)
+ULIMIT_PROCESSES ?= 10     # Number of processes
+ULIMIT_TIME ?= 5           # CPU time (seconds)
+ULIMIT_FILESIZE ?= 1024    # File size (kB)
 
-# Flags de compilation supplémentaires
+# Additional compilation flags
 EXTRA_ASFLAGS ?= 
 EXTRA_CCFLAGS ?= 
 
-# Répertoire de build personnalisé
+# Custom build directory
 CUSTOM_BUILDDIR ?= 
 
 # =============================================================================
-# CONFIGURATION INTERNE
+# INTERNAL CONFIGURATION
 # =============================================================================
 
-# Répertoires
+# Directories
 SRCDIR = src
 BUILDDIR = $(if $(CUSTOM_BUILDDIR),$(CUSTOM_BUILDDIR),build)
 
-# Fichiers
-# Générer dynamiquement l'ordre de liaison des objets
+# Files
+# Dynamically generate object linking order
 SCRIPT = scripts/gen_link_order.sh
-# Script de gestion des limites
+# Limits management script
 LIMIT_SCRIPT = scripts/limits.sh
-# Répertoire des objets et génération de la liste d'objets à lier
+# Objects directory and object list generation
 OBJDIR = $(BUILDDIR)/obj
 
-# Construction du nom de target final
+# Final target name construction
 TARGET = $(BUILDDIR)/$(PROG_NAME).$(PROG_EXT)
 
-# Gestion de l'ordre des objets
+# Object order management
 ifeq ($(OBJ_ORDER),)
-	# Ordre automatique par défaut
+	# Default automatic order
 	DYN := $(shell bash $(SCRIPT) $(SRCDIR) $(BUILDDIR) $(OBJDIR))
 	OBJECTS := $(if $(DYN),$(DYN),$(patsubst $(SRCDIR)/%.asm,$(OBJDIR)/%.o,$(wildcard $(SRCDIR)/*.asm)))
 else
-	# Ordre spécifique défini
+	# Specific order defined
 	OBJECTS := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(OBJ_ORDER)))
 endif
 
-# Flags de compilation finaux
+# Final compilation flags
 FINAL_ASFLAGS = $(ASFLAGS) $(EXTRA_ASFLAGS)
 FINAL_CCFLAGS = $(EXTRA_CCFLAGS)
 
-# Spécifier l'utilisation de bash comme shell
+# Specify bash as shell
 SHELL := /bin/bash
 
 # =============================================================================
-# FONCTIONS UTILITAIRES
+# UTILITY FUNCTIONS
 # =============================================================================
 
-# Fonction pour appliquer les ulimits
+# Function to apply ulimits
 define apply_ulimits
-	@echo "-- Application des limites de ressources --"
-	$(if $(filter-out none,$(ULIMIT_VIRTUAL)),@echo "  Mémoire virtuelle: $(ULIMIT_VIRTUAL) kB"; ulimit -v $(ULIMIT_VIRTUAL);,@echo "  Mémoire virtuelle: non limitée")
-	$(if $(filter-out none,$(ULIMIT_PROCESSES)),@echo "  Processus: $(ULIMIT_PROCESSES)"; ulimit -u $(ULIMIT_PROCESSES);,@echo "  Processus: non limité")
-	$(if $(filter-out none,$(ULIMIT_TIME)),@echo "  Temps CPU: $(ULIMIT_TIME) sec"; ulimit -t $(ULIMIT_TIME);,@echo "  Temps CPU: non limité")
-	$(if $(filter-out none,$(ULIMIT_FILESIZE)),@echo "  Taille fichiers: $(ULIMIT_FILESIZE) kB"; ulimit -f $(ULIMIT_FILESIZE);,@echo "  Taille fichiers: non limitée")
+	@echo "-- Applying resource limits --"
+	$(if $(filter-out none,$(ULIMIT_VIRTUAL)),@echo "  Virtual memory: $(ULIMIT_VIRTUAL) kB"; ulimit -v $(ULIMIT_VIRTUAL);,@echo "  Virtual memory: unlimited")
+	$(if $(filter-out none,$(ULIMIT_PROCESSES)),@echo "  Processes: $(ULIMIT_PROCESSES)"; ulimit -u $(ULIMIT_PROCESSES);,@echo "  Processes: unlimited")
+	$(if $(filter-out none,$(ULIMIT_TIME)),@echo "  CPU time: $(ULIMIT_TIME) sec"; ulimit -t $(ULIMIT_TIME);,@echo "  CPU time: unlimited")
+	$(if $(filter-out none,$(ULIMIT_FILESIZE)),@echo "  File size: $(ULIMIT_FILESIZE) kB"; ulimit -f $(ULIMIT_FILESIZE);,@echo "  File size: unlimited")
 endef
 
-# Fonction pour afficher la configuration
+# Function to display configuration
 define show_config
-	@echo "=== Configuration de compilation ==="
-	@echo "Programme: $(PROG_NAME).$(PROG_EXT)"
-	@echo "Répertoire build: $(BUILDDIR)"
-	@echo "Ordre des objets: $(if $(OBJ_ORDER),$(OBJ_ORDER),automatique)"
-	@echo "Flags ASM: $(FINAL_ASFLAGS)"
-	@echo "Flags CC: $(FINAL_CCFLAGS)"
-	@echo "Limites - VM:$(ULIMIT_VIRTUAL) Proc:$(ULIMIT_PROCESSES) Time:$(ULIMIT_TIME) File:$(ULIMIT_FILESIZE)"
+	@echo "=== Compilation Configuration ==="
+	@echo "Program: $(PROG_NAME).$(PROG_EXT)"
+	@echo "Build directory: $(BUILDDIR)"
+	@echo "Object order: $(if $(OBJ_ORDER),$(OBJ_ORDER),automatic)"
+	@echo "ASM flags: $(FINAL_ASFLAGS)"
+	@echo "CC flags: $(FINAL_CCFLAGS)"
+	@echo "Limits - VM:$(ULIMIT_VIRTUAL) Proc:$(ULIMIT_PROCESSES) Time:$(ULIMIT_TIME) File:$(ULIMIT_FILESIZE)"
 	@echo "====================================="
 endef
 
 # =============================================================================
-# CIBLES PRINCIPALES
+# MAIN TARGETS
 # =============================================================================
 all: build
 
-# Nettoyer le répertoire build (supprime tout)
+# Clean build directory (removes everything)
 clean:
 	rm -rf $(BUILDDIR)
 
-# Construction de l'ELF (purge build avant, pause pour affichage)
+# Build ELF (purge build first, pause for display)
 build: clean
 	$(call show_config)
 	@sleep 0.5
@@ -114,34 +114,34 @@ build: clean
 	@$(MAKE) $(TARGET) FINAL_ASFLAGS="$(FINAL_ASFLAGS)" FINAL_CCFLAGS="$(FINAL_CCFLAGS)"
 
 $(TARGET): $(OBJECTS)
-	@echo "-- Édition de liens --"
+	@echo "-- Linking --"
 	$(CC) -no-pie -nostartfiles $(FINAL_CCFLAGS) $(OBJECTS) -o $(TARGET)
-	@echo "-- Programme créé: $(TARGET) --"
+	@echo "-- Program created: $(TARGET) --"
 
-# Compiler les fichiers .asm en .o (répertoire obj)
+# Compile .asm files to .o (obj directory)
 $(OBJDIR)/%.o: $(SRCDIR)/%.asm
 	@mkdir -p $(OBJDIR)
-	@echo "Assemblage: $< -> $@"
+	@echo "Assembling: $< -> $@"
 	$(AS) $(FINAL_ASFLAGS) $< -o $@
 
-# Exécuter : appliquer ulimits, mesurer ressources, sans GDB
+# Execute: apply ulimits, measure resources, without GDB
 run: 
 	$(call show_config)
 	@$(MAKE) clean build FINAL_ASFLAGS="$(FINAL_ASFLAGS) -g -F dwarf"
 	$(call apply_ulimits)
-	@echo "-- Exécution du programme (mesure) --"
+	@echo "-- Running program (measurement) --"
 	/usr/bin/time -v $(TARGET)
-	@echo "-- Exécution terminée --"
+	@echo "-- Execution completed --"
 
-# Exécuter en mode debug TUI (recompile avec symboles DWARF, démarre à _start et affiche registres)
+# Execute in debug TUI mode (recompile with DWARF symbols, start at _start and show registers)
 .PHONY: run_debug
 run_debug:
 	$(call show_config)
 	@$(MAKE) clean build FINAL_ASFLAGS="$(FINAL_ASFLAGS) -g -F dwarf"
 	$(call apply_ulimits)
-	@echo "-- Exécution du programme (mesure) --"
+	@echo "-- Running program (measurement) --"
 	/usr/bin/time -v $(TARGET)
-	@echo "-- Lancement de GDB en mode TUI, run et show registers --"
+	@echo "-- Launching GDB in TUI mode, run and show registers --"
 	gdb -q \
 	    -ex "layout split" \
 	    -ex "layout regs" \
@@ -149,44 +149,44 @@ run_debug:
 	    -ex "info registers" \
 	    $(TARGET)
 
-# build_run : construction puis exécution unique
+# build_run: build then execute once
 build_run: build run
 
-# build_run_debug : compilation debug et exécution
+# build_run_debug: debug compilation and execution
 .PHONY: build_run_debug
 build_run_debug: run_debug
 
-# Surveillance des fichiers temporaires créés
+# Monitor temporary files created
 .PHONY: all build run run_debug build_run build_run_debug clean
 
 # =============================================================================
-# AIDE ET DOCUMENTATION
+# HELP AND DOCUMENTATION
 # =============================================================================
 
 help:
-	@echo "=== LayerCake Makefile - Aide ==="
+	@echo "=== FastAsmWslComp Makefile - Help ==="
 	@echo ""
-	@echo "Cibles disponibles:"
-	@echo "  all          - Compile le programme (défaut)"
-	@echo "  build        - Compile le programme"
-	@echo "  run          - Compile et exécute (sans GDB)"
-	@echo "  run_debug    - Compile et exécute avec GDB TUI"
-	@echo "  clean        - Nettoie le répertoire build"
-	@echo "  help         - Affiche cette aide"
+	@echo "Available targets:"
+	@echo "  all          - Compile the program (default)"
+	@echo "  build        - Compile the program"
+	@echo "  run          - Compile and execute (without GDB)"
+	@echo "  run_debug    - Compile and execute with GDB TUI"
+	@echo "  clean        - Clean build directory"
+	@echo "  help         - Show this help"
 	@echo ""
-	@echo "Variables configurables:"
-	@echo "  PROG_NAME=nom           - Nom du programme (défaut: program)"
-	@echo "  PROG_EXT=ext            - Extension (défaut: elf, valides: elf|bin|out)"
-	@echo "  OBJ_ORDER='obj1 obj2'   - Ordre des objets (défaut: auto)"
-	@echo "  ULIMIT_VIRTUAL=kb       - Limite mémoire virtuelle (défaut: 10240)"
-	@echo "  ULIMIT_PROCESSES=nb     - Limite processus (défaut: 10)"
-	@echo "  ULIMIT_TIME=sec         - Limite temps CPU (défaut: 5)"
-	@echo "  ULIMIT_FILESIZE=kb      - Limite taille fichiers (défaut: 1024)"
-	@echo "  EXTRA_ASFLAGS=flags     - Flags assembleur supplémentaires"
-	@echo "  EXTRA_CCFLAGS=flags     - Flags compilateur supplémentaires"
-	@echo "  CUSTOM_BUILDDIR=dir     - Répertoire de build personnalisé"
+	@echo "Configurable variables:"
+	@echo "  PROG_NAME=name           - Program name (default: program)"
+	@echo "  PROG_EXT=ext            - Extension (default: elf, valid: elf|bin|out)"
+	@echo "  OBJ_ORDER='obj1 obj2'   - Object order (default: auto)"
+	@echo "  ULIMIT_VIRTUAL=kb       - Virtual memory limit (default: 10240)"
+	@echo "  ULIMIT_PROCESSES=nb     - Process limit (default: 10)"
+	@echo "  ULIMIT_TIME=sec         - CPU time limit (default: 5)"
+	@echo "  ULIMIT_FILESIZE=kb      - File size limit (default: 1024)"
+	@echo "  EXTRA_ASFLAGS=flags     - Additional assembler flags"
+	@echo "  EXTRA_CCFLAGS=flags     - Additional compiler flags"
+	@echo "  CUSTOM_BUILDDIR=dir     - Custom build directory"
 	@echo ""
-	@echo "Exemples d'utilisation:"
+	@echo "Usage examples:"
 	@echo "  make run PROG_NAME=test"
 	@echo "  make run PROG_NAME=kernel PROG_EXT=bin"
 	@echo "  make run OBJ_ORDER='math_add math_sub math_mul math_div'"
